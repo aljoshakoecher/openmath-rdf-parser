@@ -73,7 +73,7 @@ export function toOpenMath(formula: string) {
 			// console.log({operator: operator});
 			
 			const operation = blankNode();
-			// store.add(baseApplication, rdfType, omApplication);
+			store.add(operation, rdfType, omApplication);
 			store.add(operation, omOperator, operator);
 			
 			// Define a new argument list for this operation's arguments
