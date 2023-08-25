@@ -39,7 +39,9 @@
 		"typescript": "^5.1.6"
 	},
 	"dependencies": {
+		"@comunica/query-sparql": "^2.8.3",
 		"mathjs": "^11.9.1",
+		"n3": "^1.17.1",
 		"rdflib": "^2.2.32"
 	}
 }
