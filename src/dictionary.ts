@@ -23,24 +23,72 @@ export class OperatorDictionary {
 
 	private static openMathToMathJsMapping = {
 		// Relations
-		"http://www.openmath.org/cd/relation1#eq": "=",
-		"http://www.openmath.org/cd/relation1#lt": "<",
-		"http://www.openmath.org/cd/relation1#gt": ">",
-		"http://www.openmath.org/cd/relation1#neq": "!=",
-		"http://www.openmath.org/cd/relation1#leq": "<=",
-		"http://www.openmath.org/cd/relation1#geq": ">=",
+		"http://www.openmath.org/cd/relation1#eq": {
+			symbol: "=",
+			arity: 2
+		},
+		"http://www.openmath.org/cd/relation1#lt": {
+			symbol: "<",
+			arity: 2
+		},
+		"http://www.openmath.org/cd/relation1#gt": {
+			symbol: ">",
+			arity: 2
+		},
+		"http://www.openmath.org/cd/relation1#neq": {
+			symbol: "!=",
+			arity: 2
+		},
+		"http://www.openmath.org/cd/relation1#leq": {
+			symbol: "<=",
+			arity: 2
+		},
+		"http://www.openmath.org/cd/relation1#geq": {
+			symbol: ">=",
+			arity: 2
+		},
 		// Arithmetic operators
-		"http://www.openmath.org/cd/arith1#plus": "+",
-		"http://www.openmath.org/cd/arith1#minus": "-",
-		"http://www.openmath.org/cd/arith1#times": "*",
-		"http://www.openmath.org/cd/arith1#divide": "/",
-		"http://www.openmath.org/cd/arith1#root": "sqrt",
-		"http://www.openmath.org/cd/arith1#power": "pow",
-		"http://www.openmath.org/cd/arith1#abs": "abs",
+		"http://www.openmath.org/cd/arith1#plus": {
+			symbol: "+",
+			arity: 2
+		},
+		"http://www.openmath.org/cd/arith1#minus": {
+			symbol: "-",
+			arity: 2
+		},
+		"http://www.openmath.org/cd/arith1#times": {
+			symbol: "*",
+			arity: 2
+		},
+		"http://www.openmath.org/cd/arith1#divide": {
+			symbol: "/",
+			arity: 2
+		},
+		"http://www.openmath.org/cd/arith1#root": {
+			symbol: "sqrt",
+			arity: 1
+		},
+		"http://www.openmath.org/cd/arith1#power": {
+			symbol: "pow",
+			arity: 1
+		},
+		"http://www.openmath.org/cd/arith1#abs": {
+			symbol: "abs",
+			arity: 1
+		},
 		// Transcendental functions
-		"http://www.openmath.org/cd/transc1#sin": "sin",
-		"http://www.openmath.org/cd/transc1#cos": "cos",
-		"http://www.openmath.org/cd/transc1#tan": "tan",
+		"http://www.openmath.org/cd/transc1#sin": {
+			symbol: "sin",
+			arity: 1
+		},
+		"http://www.openmath.org/cd/transc1#cos": {
+			symbol: "cos",
+			arity: 1
+		},
+		"http://www.openmath.org/cd/transc1#tan": {
+			symbol: "tan",
+			arity: 1
+		},
 	};
 
 
@@ -53,12 +101,17 @@ export class OperatorDictionary {
 	}
 
 
-	static getMathJsSymbol(openMathSymbol: string) {
+	static getMathJsSymbol(openMathSymbol: string): MathJsSymbolInformation {
 		try {
 			return OperatorDictionary.openMathToMathJsMapping[openMathSymbol];
 		} catch (error) {
-			return "err";
+			throw new Error(`Error while finding the MathJS symbol for the OpenMath symbol ${openMathSymbol}`);
 		}
 	}
 
+}
+
+export type MathJsSymbolInformation = {
+	symbol: string,
+	arity: 1 | 2
 }
