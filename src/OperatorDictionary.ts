@@ -1,3 +1,4 @@
+
 export class OperatorDictionary {
 	private static mathJsToOpenMathMapping = {
 		// Relations
@@ -92,7 +93,7 @@ export class OperatorDictionary {
 	};
 
 
-	static getOpenMathSymbol(mathJsSymbol: string) {
+	static getOpenMathSymbol(mathJsSymbol: string):string {
 		try {
 			return OperatorDictionary.mathJsToOpenMathMapping[mathJsSymbol];
 		} catch (error) {
