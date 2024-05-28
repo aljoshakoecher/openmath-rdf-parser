@@ -2,7 +2,7 @@ import { fromOpenMath } from "./fromOpenMath";
 import { toOpenMath } from "./toOpenMath";
 
 
-export class Parser {
+export class OmRdfParser {
 	
 	fromOpenMath(rdfString: string, rootApplicationIri: string): Promise<string> {
 		return fromOpenMath(rdfString, rootApplicationIri);

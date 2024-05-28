@@ -1,9 +1,9 @@
 import {Parser as N3Parser, Store, DataFactory, Term, BlankNode, NamedNode} from 'n3';
 const {namedNode} = DataFactory;
-import { Parser } from "../src/parser";
+import {OmRdfParser} from './../src/Parser';
 import { Quad } from '@rdfjs/types';
 
-const p = new Parser();
+const p = new OmRdfParser();
 const n3Parser = new N3Parser();
 
 const rdfType = namedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
