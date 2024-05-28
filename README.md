@@ -3,6 +3,7 @@ A parser to convert between string representation and OpenMath RDF representatio
 
 
 ## How to use
+Install the library into your project using `npm install openmath-rdf-parser`
 The main entry point is the `OmRdfParser` class. Import that class and use either `fromOpenMath` or `toOpenMath` to perform the corresponding translations.
 
 ### fromOpenMath
