@@ -1,27 +1,99 @@
-import { toOpenMath } from "../src/parser";
+import {Parser as N3Parser, Store, DataFactory, Term, BlankNode, NamedNode} from 'n3';
+const {namedNode} = DataFactory;
+import { Parser } from "../src/parser";
+import { Quad } from '@rdfjs/types';
 
-// TODO: The test is currently failing and the parsing function has to be fixed before the test can be fixed
-// TODO: toOpenMath should also use N3
+const p = new Parser();
+const n3Parser = new N3Parser();
+
+const rdfType = namedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+const omApplication = namedNode('http://openmath.org/vocab/math#Application');
+const omArguments = namedNode('http://openmath.org/vocab/math#arguments');
+const omOperator = namedNode('http://openmath.org/vocab/math#operator');
+const omVariableName = namedNode('http://openmath.org/vocab/math#name');
+const omLiteralValue = namedNode('http://openmath.org/vocab/math#value');
+
+// TODO: The test is currently failing and needs a better comparison as a pure string check might always fail due to order etc
 describe('Testing conversion from plain text to OpenMath RDF', () => {
-	test('Should convert simple equation', () => {
-		const input = "x=y";
+	
+	test('Should convert very simple relation', async () => {
+		const input = "x<=10";
+		const result = await p.toOpenMath(input);
 		
-		const expectedResult = ` 
-		@prefix : </#>.
-		@prefix ont: <http://example.org/ontology#>.
-		@prefix m: <http://openmath.org/vocab/math#>.
+		// Put the result in a store to get quads for checking
+		const n3Store = new Store();
+		n3Store.addQuads(n3Parser.parse(result));
 
-		ont:myApplication_equals
-			a m:Application;
-			m:arguments
-				( [ a m:Variable; m:name "x" ]
-				[ a m:Variable; m:name "y" ] );
-		m:operator "http://www.openmath.org/cd/relation1#eq".`;
-
-		const result = toOpenMath(input);
+		// Get all applications -> there must be exactly one
+		const applications = new Array<Quad>();
+		for (const quad of n3Store.match(null, rdfType, omApplication, null))
+			applications.push(quad);
+		expect(applications.length).toBe(1);
 		
-		expect(result).toBe(expectedResult);
+		// extract all lists to handle RDF lists as JS arrays
+		const lists = n3Store.extractLists();
+		
+		// The application must have an arguments list with two entries (x and 10)
+		const application = applications[0].subject as Term;
+		const argumentListNode = n3Store.match(application, omArguments, null, null).read()?.object as BlankNode;
+		const argumentList = lists[argumentListNode.value];
+		expect(argumentList.length).toBe(2);
+
+		// The first argument must have a name of "x"
+		const firstArgumentName = n3Store.match(argumentList[0] as BlankNode, omVariableName, null, null).read()?.object as BlankNode;
+		expect(firstArgumentName.value).toBe("x");
+
+		// The second argument must have a value of 10
+		const secondArgumentValue = n3Store.match(argumentList[1] as BlankNode, omLiteralValue, null, null).read()?.object as BlankNode;
+		expect(secondArgumentValue .value).toBe("10");
 	});
 
-	
+	test('Should convert a relation between a sum of sin()s and a constant', async () => {
+		const input = "sin(x) + sin(y) <= 2";
+		const result = await p.toOpenMath(input);
+		
+		// Put the result in a store to get quads for checking
+		const n3Store = new Store();
+		n3Store.addQuads(n3Parser.parse(result));
+
+		// Get all applications -> there must be exactly four (one for "=", one for the sum on the left side, and one each for the sin())
+		const applications = new Array<Quad>();
+		for (const quad of n3Store.match(null, rdfType, omApplication, null))
+			applications.push(quad);
+		expect(applications.length).toBe(4);
+		
+		// extract all lists to handle RDF lists as JS arrays
+		const lists = n3Store.extractLists();		
+
+		// The first application should have <= as an operator, another application and "2" as its arguments
+		const firstApplicationOperator = n3Store.match(applications[0].subject as Term, omOperator, null, null).read();		
+		expect(firstApplicationOperator?.object.value).toBe("http://www.openmath.org/cd/relation1#leq");
+
+		const firstApplicationArgumentsNode = n3Store.match(applications[0].subject as Term, omArguments, null, null).read()?.object as Term;
+		const firstApplicationArguments = lists[firstApplicationArgumentsNode.value];
+		firstApplicationArguments.forEach(argument => {
+			if (argument.termType == "NamedNode") {
+				const argumentType = n3Store.match(argument as NamedNode, rdfType, omApplication, null).read();
+				expect(argumentType).toBeTruthy();
+			}
+			else if (argument.termType == "BlankNode") {
+				const argumentValue = n3Store.match(argument as BlankNode, omLiteralValue, null, null).read()?.object;
+				expect(argumentValue?.value).toBe("2");
+			}
+		});
+
+		// TODO: Extend test to test sin mappings
+	});
+
+	test('Should convert an equation', async () => {
+		const input = "x = y + z";
+		const result = await p.toOpenMath(input);
+
+		console.log(result);
+		
+
+		// TODO: Complete test
+	});
+
+	// TODO: Add additional tests with different structure
 });
