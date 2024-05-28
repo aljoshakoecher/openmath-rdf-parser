@@ -1,7 +1,7 @@
 {
 	"name": "openmath-rdf-parser",
 	"version": "0.0.1",
-	"description": "A lightweight library to read and write textual formulas from / to OpenMath RDF syntax",
+	"description": "A parser to read and write textual formulas from / to OpenMath RDF syntax",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"files": [
