@@ -1,1 +1,1 @@
-export {fromOpenMath, toOpenMath} from './parser'
+export {Parser} from './Parser'
