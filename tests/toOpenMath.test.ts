@@ -13,7 +13,6 @@ const omOperator = namedNode('http://openmath.org/vocab/math#operator');
 const omVariableName = namedNode('http://openmath.org/vocab/math#name');
 const omLiteralValue = namedNode('http://openmath.org/vocab/math#value');
 
-// TODO: The test is currently failing and needs a better comparison as a pure string check might always fail due to order etc
 describe('Testing conversion from plain text to OpenMath RDF', () => {
 	
 	test('Should convert very simple relation', async () => {
