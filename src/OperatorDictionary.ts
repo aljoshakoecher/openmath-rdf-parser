@@ -13,7 +13,7 @@ export class OperatorDictionary {
 		"-": "http://www.openmath.org/cd/arith1#minus",
 		"*": "http://www.openmath.org/cd/arith1#times",
 		"/": "http://www.openmath.org/cd/arith1#divide",
-		"sqrt": "http://www.openmath.org/cd/arith1#root",
+		"nthRoot": "http://www.openmath.org/cd/arith1#root",
 		"pow": "http://www.openmath.org/cd/arith1#power",
 		"abs": "http://www.openmath.org/cd/arith1#abs",
 		// Transcendental functions
@@ -66,8 +66,8 @@ export class OperatorDictionary {
 			arity: 2
 		},
 		"http://www.openmath.org/cd/arith1#root": {
-			symbol: "sqrt",
-			arity: 1
+			symbol: "nthRoot",
+			arity: 2
 		},
 		"http://www.openmath.org/cd/arith1#power": {
 			symbol: "pow",
