@@ -1,4 +1,4 @@
-import {OmRdfParser} from './../src/Parser';
+import { OmRdfParser } from "../src/OmRdfParser";
 const p = new OmRdfParser();
 
 describe('Testing conversion from OpenMath to plain text', () => {
