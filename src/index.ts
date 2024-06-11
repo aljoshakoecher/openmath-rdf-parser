@@ -1,1 +1,1 @@
-export {OmRdfParser as Parser} from './Parser';
+export {OmRdfParser} from './OmRdfParser';
