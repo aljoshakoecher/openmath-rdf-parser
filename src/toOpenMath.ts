@@ -1,8 +1,9 @@
 import { MathNode, parse as mathParse } from "mathjs";
 import { OperatorDictionary } from "./OperatorDictionary";
-
-import { BlankNode, DataFactory, NamedNode, Quad, Writer} from "n3";
-const { literal, blankNode, namedNode} = DataFactory;
+import { BlankNode, DataFactory, NamedNode, Quad, Term, Writer} from "n3";
+import { PrefixedFormula } from "./Formula";
+import { IriVariableDictionary } from "./IriVariableMap";
+const { literal, blankNode, namedNode } = DataFactory;
 
 // Define base IRI
 const baseIri = "http://example.org/ontology#";		//TODO: Allow passing in base IRI
@@ -13,30 +14,47 @@ const omApplication = namedNode('http://openmath.org/vocab/math#Application');
 const omArguments = namedNode('http://openmath.org/vocab/math#arguments');
 const omOperator = namedNode('http://openmath.org/vocab/math#operator');
 const omVariable = namedNode('http://openmath.org/vocab/math#Variable');
-const omLiteral =  namedNode('http://openmath.org/vocab/math#Literal');
+const omLiteral = namedNode('http://openmath.org/vocab/math#Literal');
 const omVariableName = namedNode('http://openmath.org/vocab/math#name');
 const omLiteralValue = namedNode('http://openmath.org/vocab/math#value');
 
 // globally define writer so that it doesn't have to be passed in all recursive function calls
-let writer: Writer = new Writer({ 
-	prefixes: { m: 'http://openmath.org/vocab/math#' } 
+let writer: Writer = new Writer({
+	prefixes: { m: 'http://openmath.org/vocab/math#' }
 });
+
 
 /**
  * Convert a mathematical expression from a string to an OpenMath RDF object
  * @param formula A mathematical formula represented in string syntax
  * @returns 
  */
-export async function toOpenMath(formula: string): Promise<string> {
-	writer = new Writer({ 
-		prefixes: { m: 'http://openmath.org/vocab/math#' } 
+export async function toOpenMath(prefixedFormula: PrefixedFormula | string): Promise<string> {
+	IriVariableDictionary.reset();
+
+	// Add open-math prefix and user-defined prefixes to the writer
+	writer = new Writer({
+		prefixes: { m: 'http://openmath.org/vocab/math#' }
 	});
+
+	let formula: string;
+	if (typeof prefixedFormula != 'string') {
+		for (const [key, value] of prefixedFormula.prefixes.entries()) {
+			writer.addPrefix(key, value);
+		}
+		formula = resolvePrefixes(prefixedFormula);
+	} else {
+		formula = prefixedFormula;
+	}
+
+	formula = replaceIris(formula);
+
 	// Parse the textual formula into a math.js representation
 	const node = mathParse(formula);
 
 	// Map the parsed math.js node structure
 	mapToRdf(node);
-	
+
 	// serialize to ttl
 	const result = await serializeWriter(writer);
 	return result;
@@ -57,7 +75,13 @@ function mapToRdf(node: MathNode): NamedNode | BlankNode {
 	case 'SymbolNode': {
 		const castNode = node as math.SymbolNode;
 		const nodeName = castNode.name;
-		const rdfSymbolNode = blankNode();
+		let rdfSymbolNode: Term;
+		if (IriVariableDictionary.containsVariable(nodeName)) {
+			const iriOfVariable = IriVariableDictionary.getIriForVariable(nodeName);
+			rdfSymbolNode = namedNode(iriOfVariable);
+		} else {
+			rdfSymbolNode = blankNode();
+		}
 		const typeTriple = new Quad(rdfSymbolNode, rdfType, omVariable);
 		const nameTriple = new Quad(rdfSymbolNode, omVariableName, literal(nodeName));
 		writer.addQuads([typeTriple, nameTriple]);
@@ -69,7 +93,7 @@ function mapToRdf(node: MathNode): NamedNode | BlankNode {
 		const application = namedNode(`${baseIri}${crypto.randomUUID()}_eq`);
 		writer.addQuad(application, rdfType, omApplication);
 		writer.addQuad(application, omOperator, rdfOperator);
-	
+
 		// add arguments for each arg
 		const argumentList = new Array<NamedNode | BlankNode>;
 		// map object and value (left and right side of equation) and add it to the list
@@ -88,7 +112,7 @@ function mapToRdf(node: MathNode): NamedNode | BlankNode {
 		const application = namedNode<string>(`${baseIri}${crypto.randomUUID()}_${castNode.fn}`);
 		writer.addQuad(application, rdfType, omApplication);
 		writer.addQuad(application, omOperator, rdfOperator);
-	
+
 		// add arguments for each arg
 		const argumentList = new Array<NamedNode | BlankNode>;
 		castNode.args.forEach(argument => {
@@ -107,7 +131,7 @@ function mapToRdf(node: MathNode): NamedNode | BlankNode {
 		const application = namedNode(`${baseIri}${crypto.randomUUID()}_${castNode.fn}`) as NamedNode;
 		writer.addQuad(application, rdfType, omApplication);
 		writer.addQuad(application, omOperator, rdfOperator);
-		
+
 		// add arguments for each arg
 		const argumentList = new Array<NamedNode | BlankNode>();
 		castNode.args.forEach(argument => {
@@ -120,11 +144,57 @@ function mapToRdf(node: MathNode): NamedNode | BlankNode {
 		// writer.addQuad(application, omArguments, literal(operator));
 		return application;
 	}
-		
+
 	default:
 		break;
 	}
 }
+
+
+
+/**
+* Replaces all prefixes in a formula
+* @param prefixedFormula Formula with prefix definition
+* @returns Prefix-free formula with full IRIs
+*/
+export function resolvePrefixes(prefixedFormula: PrefixedFormula): string {
+	const formula = prefixedFormula.formula;
+	const prefixes = prefixedFormula.prefixes;
+
+	let match;
+	let resolvedFormula = formula;
+	const regex = /((\w*):)[^//][a-zA-Z-_]*/g;
+	while ((match = regex.exec(formula)) !== null) {
+		const prefixFound = match[2];
+		const prefixWithColon = match[1];
+		if (prefixes.has(prefixFound)) {
+			resolvedFormula = resolvedFormula.replace(prefixWithColon, prefixes.get(prefixFound));
+		} else {
+			throw new Error(`The prefix ${match[2]} is not defined!`);
+		}
+	}
+
+	return resolvedFormula;
+}
+
+/**
+ * Replaces all IRIs with variables and keeps track of the mapping to re-translate it
+ * @param formula 
+ * @returns 
+ */
+export function replaceIris(formula: string): string {
+	const regex = /https?:[/]{2}[a-zA-Z.\-_/#0-9]*/g;		// pretty naive regex for IRIs
+	let match;
+	let formulaWithIrisReplaced = formula;
+	while ((match = regex.exec(formula)) !== null) {
+		const iriFound = match[0];
+		const variableForIri = IriVariableDictionary.addNewIri(iriFound);
+		formulaWithIrisReplaced = formulaWithIrisReplaced.replace(iriFound, variableForIri);
+	}
+
+	return formulaWithIrisReplaced;
+}
+
 
 
 /**
