@@ -1,8 +1,8 @@
 import { MathNode, parse as mathParse } from "mathjs";
-import { OperatorDictionary } from "./OperatorDictionary";
+import { OperatorDictionary } from "./OperatorDictionary.js";
 import { BlankNode, DataFactory, NamedNode, Quad, Term, Writer} from "n3";
-import { PrefixedFormula } from "./Formula";
-import { IriVariableDictionary } from "./IriVariableMap";
+import { PrefixedFormula } from "./Formula.js";
+import { IriVariableDictionary } from "./IriVariableMap.js";
 const { literal, blankNode, namedNode } = DataFactory;
 
 // Define base IRI

@@ -1,1 +1,1 @@
-export {OmRdfParser} from './OmRdfParser';
+export {OmRdfParser} from './OmRdfParser.js';

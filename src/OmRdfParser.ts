@@ -1,6 +1,6 @@
-import { PrefixedFormula } from "./Formula";
-import { fromOpenMath } from "./fromOpenMath";
-import { replaceIris, resolvePrefixes, toOpenMath } from "./toOpenMath";
+import { PrefixedFormula } from "./Formula.js";
+import { fromOpenMath } from "./fromOpenMath.js";
+import { replaceIris, resolvePrefixes, toOpenMath } from "./toOpenMath.js";
 
 
 export class OmRdfParser {

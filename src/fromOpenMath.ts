@@ -1,5 +1,5 @@
 import { QueryEngine } from "@comunica/query-sparql";
-import { MathJsSymbolInformation, OperatorDictionary } from "./OperatorDictionary";
+import { MathJsSymbolInformation, OperatorDictionary } from "./OperatorDictionary.js";
 import { Bindings } from "@rdfjs/types";
 
 import { Store, Parser as N3Parser} from "n3";
