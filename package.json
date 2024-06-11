@@ -1,6 +1,7 @@
 {
 	"name": "openmath-rdf-parser",
-	"version": "0.0.1",
+	"version": "1.0.0",
+	"type": "module",
 	"description": "A parser to read and write textual formulas from / to OpenMath RDF syntax",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -8,7 +9,11 @@
 		"/dist"
 	],
 	"scripts": {
-		"test": "jest"
+		"lint": "eslint src tests",
+		"test": "jest",
+		"prebuild": "rimraf dist",
+		"build": "tsc",
+		"prepublishOnly": "npm run lint && npm run test && npm run build"
 	},
 	"repository": {
 		"type": "git",
@@ -38,6 +43,7 @@
 		"eslint": "^8.56.0",
 		"eslint-plugin-import": "^2.29.1",
 		"jest": "^29.7.0",
+		"rimraf": "^5.0.7",
 		"ts-jest": "^29.1.4",
 		"typescript": "^5.4.5"
 	},
