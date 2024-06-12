@@ -1,1 +1,2 @@
-export {OmRdfParser} from './OmRdfParser.js';
+export {OmRdfParser} from './OmRdfParser';
+export {PrefixedFormula} from './Formula';
