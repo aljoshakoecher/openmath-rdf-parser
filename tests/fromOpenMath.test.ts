@@ -44,7 +44,7 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#myApplication_equalsComplex");
 		expect(result).toBe("x=y+z");
 	});
-	
+
 
 	test('Should convert a nested expression with two layers', async () => {
 		const ttlInput = ` 
@@ -65,7 +65,7 @@ describe('Testing conversion from OpenMath to plain text', () => {
 							]
 					);
 			m:operator "http://www.openmath.org/cd/transc1#sin".`;
-		
+
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#myApplication_sin");
 		expect(result).toBe("sin(x+y)");
 	});
@@ -97,8 +97,33 @@ describe('Testing conversion from OpenMath to plain text', () => {
 							]
 					);
 		m:operator "http://www.openmath.org/cd/transc1#sin".`;
-		
+
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#myApplication_sinpow");
 		expect(result).toBe("sin(pow(x+y))");
 	});
+
+
+
+	test('Should convert simple expression with a constant', async () => {
+		const ttlInput = ` 
+		@prefix m: <http://openmath.org/vocab/math#>.
+
+		<http://example.org/ontology#123_eq> a m:Application;
+			m:operator <http://www.openmath.org/cd/relation1#eq>.
+		_:n3-0 a m:Variable;
+			m:name "x".
+		<http://example.org/ontology#123_add> a m:Application;
+			m:operator <http://www.openmath.org/cd/arith1#plus>.
+		_:n3-1 a m:Variable;
+			m:name "y".
+		_:n3-2 a m:Literal;
+			m:name "asd";
+			m:value 5.
+		<http://example.org/ontology#123_add> m:arguments (_:n3-1 _:n3-2).
+		<http://example.org/ontology#123_eq> m:arguments (_:n3-0 <http://example.org/ontology#123_add>).`;
+
+		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#123_eq");
+		expect(result).toBe("x=y+5");
+	});
+
 });
