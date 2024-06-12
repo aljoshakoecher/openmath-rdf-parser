@@ -2,6 +2,7 @@ import { Parser as N3Parser, Store, DataFactory, Term, BlankNode, NamedNode } fr
 const { namedNode } = DataFactory;
 import { OmRdfParser } from '../src/OmRdfParser';
 import { Quad } from '@rdfjs/types';
+import { PrefixedFormula } from '../src/Formula';
 
 const p = new OmRdfParser();
 const n3Parser = new N3Parser();
@@ -117,8 +118,12 @@ describe('Testing conversion from plain text to OpenMath RDF', () => {
 		const prefixes = new Map<string, string>();
 		prefixes.set('x', 'http://example.org/x#');
 		prefixes.set('y', 'http://example.org/y#');
-
-		const result = await p.toOpenMath({ prefixes: prefixes, formula: input });
+		
+		const prefixedFormula: PrefixedFormula = {
+			prefixes: prefixes, 
+			formula: input
+		};
+		const result = await p.toOpenMath(prefixedFormula);
 
 		// Put the result in a store to get quads for checking
 		const n3Store = new Store();

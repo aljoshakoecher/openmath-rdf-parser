@@ -22,7 +22,7 @@ export class OperatorDictionary {
 		"tan": "http://www.openmath.org/cd/transc1#tan",
 	};
 
-	private static openMathToMathJsMapping = {
+	private static openMathToMathJsMapping : { [key: string]: MathJsSymbolInformation} = {
 		// Relations
 		"http://www.openmath.org/cd/relation1#eq": {
 			symbol: "=",
@@ -95,7 +95,7 @@ export class OperatorDictionary {
 
 	static getOpenMathSymbol(mathJsSymbol: string):string {
 		try {
-			return OperatorDictionary.mathJsToOpenMathMapping[mathJsSymbol];
+			return OperatorDictionary.mathJsToOpenMathMapping[mathJsSymbol as keyof typeof this.mathJsToOpenMathMapping];
 		} catch (error) {
 			return "http://www.openmath.org/cd/error#unhandled_symbol";
 		}
@@ -104,7 +104,7 @@ export class OperatorDictionary {
 
 	static getMathJsSymbol(openMathSymbol: string): MathJsSymbolInformation {
 		try {
-			return OperatorDictionary.openMathToMathJsMapping[openMathSymbol];
+			return OperatorDictionary.openMathToMathJsMapping[openMathSymbol as keyof typeof this.openMathToMathJsMapping];
 		} catch (error) {
 			throw new Error(`Error while finding the MathJS symbol for the OpenMath symbol ${openMathSymbol}`);
 		}

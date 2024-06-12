@@ -1,8 +1,8 @@
 import { MathNode, parse as mathParse } from "mathjs";
-import { OperatorDictionary } from "./OperatorDictionary.js";
+import { OperatorDictionary } from "./OperatorDictionary";
 import { BlankNode, DataFactory, NamedNode, Quad, Term, Writer} from "n3";
-import { PrefixedFormula } from "./Formula.js";
-import { IriVariableDictionary } from "./IriVariableMap.js";
+import { PrefixedFormula } from "./Formula";
+import { IriVariableDictionary } from "./IriVariableMap";
 const { literal, blankNode, namedNode } = DataFactory;
 
 // Define base IRI
@@ -38,13 +38,13 @@ export async function toOpenMath(prefixedFormula: PrefixedFormula | string): Pro
 	});
 
 	let formula: string;
-	if (typeof prefixedFormula != 'string') {
-		for (const [key, value] of prefixedFormula.prefixes.entries()) {
+	if (Object.hasOwn(prefixedFormula as PrefixedFormula, 'prefixes')) {
+		for (const [key, value] of (prefixedFormula as PrefixedFormula).prefixes.entries()) {
 			writer.addPrefix(key, value);
 		}
-		formula = resolvePrefixes(prefixedFormula);
+		formula = resolvePrefixes(prefixedFormula as PrefixedFormula);
 	} else {
-		formula = prefixedFormula;
+		formula = prefixedFormula as string;
 	}
 
 	formula = replaceIris(formula);
@@ -144,9 +144,8 @@ function mapToRdf(node: MathNode): NamedNode | BlankNode {
 		// writer.addQuad(application, omArguments, literal(operator));
 		return application;
 	}
-
 	default:
-		break;
+		throw new Error('Type not handled');
 	}
 }
 
@@ -168,7 +167,8 @@ export function resolvePrefixes(prefixedFormula: PrefixedFormula): string {
 		const prefixFound = match[2];
 		const prefixWithColon = match[1];
 		if (prefixes.has(prefixFound)) {
-			resolvedFormula = resolvedFormula.replace(prefixWithColon, prefixes.get(prefixFound));
+			const iri = prefixes.get(prefixFound) as string;
+			resolvedFormula = resolvedFormula.replace(prefixWithColon, iri);
 		} else {
 			throw new Error(`The prefix ${match[2]} is not defined!`);
 		}

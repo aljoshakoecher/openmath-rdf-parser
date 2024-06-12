@@ -36,8 +36,12 @@ export class IriVariableDictionary {
 	 * @param iri IRI that is replaced by an OpenMath variable
 	 * @returns The valid OpenMath variable name
 	 */
-	static getVariableForIri(iri: string) {
-		return this.iriToVariable.get(iri);
+	static getVariableForIri(iri: string): string {
+		const variable =  this.iriToVariable.get(iri);
+		if (variable === undefined) {
+			throw new Error(`No entry for IRI ${iri}`);
+		}
+		return variable;
 	}
 
 	/**
@@ -45,8 +49,12 @@ export class IriVariableDictionary {
 	 * @param variable A valid OpenMath variable to be used in parsing
 	 * @returns An IRI that stands for the variable
 	 */
-	static getIriForVariable(variable: string) {
-		return this.variableToIri.get(variable);
+	static getIriForVariable(variable: string): string {
+		const iri = this.variableToIri.get(variable);
+		if (iri === undefined) {
+			throw new Error(`No entry for variable ${variable}`);
+		}
+		return iri;
 	}
 
 

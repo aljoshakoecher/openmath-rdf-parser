@@ -3,7 +3,7 @@
  */
 export interface PrefixedFormula {
 	// Key value object of prefixes and their namespaces
-	prefixes?: Map<string, string>;
+	prefixes: Map<string, string>;
 	// The actual formular in plain string
 	formula: string
 }
