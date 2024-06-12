@@ -19,6 +19,7 @@
 	"scripts": {
 		"lint": "eslint src tests",
 		"test": "jest",
+		"test:coverage": "jest --coverage",
 		"prebuild": "rimraf dist",
 		"build:esm": "tsc --project tsconfig.json",
 		"build:cjs": "tsc --project tsconfig.cjs.json",
