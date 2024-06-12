@@ -1,14 +1,33 @@
-{
-	"compilerOptions": {
-		"lib": ["ESNext"],
-		"module": "Node16",
-		"moduleResolution": "Node16",
-		"target": "ES2019",
-		"declaration": true,
-		"outDir": "./dist",
-		"esModuleInterop": true
-	},
-	"include": [
-		"src/**/*"
-	]
-}
+	{
+		"compilerOptions": {
+			"target": "ES6",
+			"module": "ES6",
+			"outDir": "./dist/esm",
+			"rootDir": "./src",
+			"declaration": true,
+			"declarationDir": "./dist/types",
+			"esModuleInterop": true,
+			"lib": ["esnext"],
+			"moduleResolution": "node",
+			"incremental": true,
+			"baseUrl": "./src",
+			"allowSyntheticDefaultImports": true,
+			"alwaysStrict": true,
+			"sourceMap": true,
+			"forceConsistentCasingInFileNames": true,
+			"noFallthroughCasesInSwitch": true,
+			"noImplicitReturns": true,
+			"noUnusedLocals": true,
+			"noUnusedParameters": true,
+			"noImplicitAny": true,
+			"noImplicitThis": true,
+			"strictNullChecks": true,
+			"exactOptionalPropertyTypes": true,
+			"strictFunctionTypes": true,
+			"strictPropertyInitialization": true,
+			"useUnknownInCatchVariables": true
+		},
+		"include": [
+			"src/**/*"
+		]
+	}

@@ -1,18 +1,28 @@
 {
 	"name": "openmath-rdf-parser",
 	"version": "1.0.0",
-	"type": "module",
 	"description": "A parser to read and write textual formulas from / to OpenMath RDF syntax",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "./dist/cjs/index.js",
+	"module": "./dist/esm/index.js",
+	"types": "./dist/types/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/esm/index.js",
+			"require": "./dist/cjs/index.js"
+		}
+	},
 	"files": [
-		"/dist"
+		"dist",
+		"dist/esm",
+		"dist/cjs"
 	],
 	"scripts": {
 		"lint": "eslint src tests",
 		"test": "jest",
 		"prebuild": "rimraf dist",
-		"build": "tsc",
+		"build:esm": "tsc --project tsconfig.json",
+		"build:cjs": "tsc --project tsconfig.cjs.json",
+		"build": "npm run build:esm && npm run build:cjs",
 		"prepublishOnly": "npm run lint && npm run test && npm run build"
 	},
 	"repository": {
