@@ -1,3 +1,4 @@
+import { FormulaResult } from "../src/FormulaResult";
 import { OmRdfParser } from "../src/OmRdfParser";
 const p = new OmRdfParser();
 
@@ -16,7 +17,14 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		m:operator "http://www.openmath.org/cd/relation1#eq".`;
 
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#myApplication_equals");
-		expect(result).toBe("x=y");
+		const expectedResultEntry = new FormulaResult(
+			{
+				formula:"x=y",
+				context: null
+			},
+			"http://example.org/ontology#myApplication_equals",
+		);
+		expect(result).toStrictEqual(expectedResultEntry);
 	});
 
 
@@ -42,7 +50,14 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		m:operator "http://www.openmath.org/cd/relation1#eq".`;
 
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#myApplication_equalsComplex");
-		expect(result).toBe("x=y+z");
+		const expectedResultEntry = new FormulaResult(
+			{
+				formula:"x=y+z",
+				context: null
+			},
+			"http://example.org/ontology#myApplication_equalsComplex",
+		);
+		expect(result).toStrictEqual(expectedResultEntry);
 	});
 
 
@@ -67,7 +82,14 @@ describe('Testing conversion from OpenMath to plain text', () => {
 			m:operator "http://www.openmath.org/cd/transc1#sin".`;
 
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#myApplication_sin");
-		expect(result).toBe("sin(x+y)");
+		const expectedResultEntry = new FormulaResult(
+			{
+				formula:"sin(x+y)",
+				context: null
+			},
+			"http://example.org/ontology#myApplication_sin",
+		);
+		expect(result).toStrictEqual(expectedResultEntry);
 	});
 
 
@@ -99,7 +121,14 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		m:operator "http://www.openmath.org/cd/transc1#sin".`;
 
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#myApplication_sinpow");
-		expect(result).toBe("sin(pow(x+y))");
+		const expectedResultEntry = new FormulaResult(
+			{
+				formula:"sin(pow(x+y))",
+				context: null
+			},
+			"http://example.org/ontology#myApplication_sinpow",
+		);
+		expect(result).toStrictEqual(expectedResultEntry);
 	});
 
 
@@ -123,7 +152,14 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		<http://example.org/ontology#123_eq> m:arguments (_:n3-0 <http://example.org/ontology#123_add>).`;
 
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#123_eq");
-		expect(result).toBe("x=y+5");
+		const expectedResultEntry = new FormulaResult(
+			{
+				formula:"x=y+5",
+				context: null
+			},
+			"http://example.org/ontology#123_eq",
+		);
+		expect(result).toStrictEqual(expectedResultEntry);
 	});
 
 });

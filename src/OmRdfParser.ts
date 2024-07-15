@@ -1,11 +1,23 @@
 import { PrefixedFormula } from "./Formula";
-import { fromOpenMath } from "./fromOpenMath";
+import { FormulaResult } from "./FormulaResult";
+import { allFromOpenMath, fromOpenMath } from "./fromOpenMath";
 import { replaceIris, resolvePrefixes, toOpenMath } from "./toOpenMath";
 
 /**
  * A parser that allows converting between string and RDF representation of mathematical formulas
  */
 export class OmRdfParser {
+
+
+	/**
+	 * Converts all OpenMath RDF representation in an RDF dataset to a string representation.
+	 * 
+	 * @param {string} rdfString - RDF dataset that contains an OpenMath application to be converted to its string representation.
+	 * @returns {Promise<string>} - A list of formulas that was originally represented as OpenMath in plain string syntax.
+	 */
+	allFromOpenMath(rdfString: string): Promise<Array<FormulaResult>> {
+		return allFromOpenMath(rdfString);
+	}
 
 	/**
 	 * Converts an OpenMath RDF representation to a string representation.
@@ -14,7 +26,7 @@ export class OmRdfParser {
 	 * @param {string} rootApplicationIri - IRI of the application to be transformed. Your rdfString may contain multiple expressions in the form of OpenMath applications. The parameter rootApplicationIri refers to the one you want to convert to its string representation.
 	 * @returns {Promise<string>} - The formula that was originally represented as OpenMath in plain string syntax.
 	 */
-	fromOpenMath(rdfString: string, rootApplicationIri: string): Promise<string> {
+	fromOpenMath(rdfString: string, rootApplicationIri: string): Promise<FormulaResult> {
 		return fromOpenMath(rdfString, rootApplicationIri);
 	}
 
