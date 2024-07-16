@@ -1,12 +1,7 @@
 import { getOpenMathBindings } from "../src/fromOpenMath";
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+import { capabilityRdfData } from "./capability.test";
 
 describe('Testing query functionalities', () => {
-	// Give time to any async operation to complete after each test
-	afterEach(async () => {
-		await sleep(2000);
-	});
 	test('Should return the correct amount of results', async () => {
 		const ttlInput = ` 
 		@prefix : </#>.
@@ -24,5 +19,12 @@ describe('Testing query functionalities', () => {
 		expect(bindings.length).toBe(2);
 	});
 
+	test('Should return the correct amount of results for the capablity', async () => {
+		const ttlInput = capabilityRdfData;
+		
+		// Capability data should have 4 bindings
+		const bindings = await getOpenMathBindings(ttlInput);
+		expect(bindings.length).toBe(4);
+	});
 
 });
