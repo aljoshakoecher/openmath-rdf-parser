@@ -37,7 +37,7 @@ export async function getOpenMathBindings(rdfString: string): Promise<Array<Bind
 
 		?argumentList rdf:rest*/rdf:first ?arg.
 		?arg a ?argType.
-		# ?argType rdfs:subClassOf OM:Object.
+		FILTER(STRSTARTS(STR(?argType), "http://openmath.org"))
 		OPTIONAL {
 			?context ?x ?application.
 		}
