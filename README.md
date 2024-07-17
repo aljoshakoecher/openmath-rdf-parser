@@ -35,17 +35,32 @@ Install the library into your project using `npm install openmath-rdf-parser` an
 import { OmRdfParser } from "openmath-rdf-parser";
 const parser = new OmRdfParser();
 ```
-Use either `fromOpenMath` or `toOpenMath` to perform the corresponding translations as described below
+Use the functions below to convert from Open Math RDF to plain string formulas or from plain string formulas to an Open Math RDF representation.
+
+### Convert Open Math RDF to string formulas
+There are two functions to get formulas in RDF and convert them to a string representation. The function `fromOpenMath()` converts a single formula (identified by an IRI of one Open Math application) and returns it as a `FormulaResult` object.
+#### allFromOpenMath
+The function `allFromOpenMath(rdfString: string)` finds all OpenMath formulas inside `rdfString` and convert them into an array of `FormulaResult` objects, which have the following structure: 
+```
+class FormulaResult {
+	context: string, 
+	formula: string,
+	rootApplicationIri: string,
+}
+```
+
+In this object, `formula` stores the actual formula. `context` contains the IRI of the element that the OpenMath application is connected to. And `rootApplicationIri` is the IRI of the root application, i.e., the application acting as the root element of a formula.
 
 
-### fromOpenMath
-Use `fromOpenMath(rdfString: string, rootApplicationIri: string)` to convert from an OpenMath RDF representation to a string representation. The parameters to pass are:
+#### fromOpenMath
+Use `fromOpenMath(rdfString: string, rootApplicationIri: string)` to convert from one particular OpenMath RDF representation to a string representation. The parameters to pass are:
 - `rdfString`: RDF dataset that contains an OpenMath application to be converted to its string representation
 - `rootApplicationIri`: IRI of the application to be transformed. Your `rdfString` may contain multiple expressions in the form of OpenMath applications. The parameter `rootApplicationIri` refers to the one you want to conver to its string representation.
 
-The function returns the formula that was originally represented as OpenMath in plain string syntax.
+The function `fromOpenMath()` always returns one individual `FormulaResult` object (structure see above).
 
 
+### Convert string formulas to Open Math RDF
 ### toOpenMath
 Use `toOpenMath(formula: PrefixedFormula | string)` to convert from a mathematical formula in plain string representation to its OpenMath RDF representation. There is only one parameter to pass, but this parameter allows for multiple options.
 - `formula`: In the simplest case, this is a string representation of a formula without any references to ontological entities, e.g., `x + y <= 2`. For such cases, blank nodes are created representing x and y.
