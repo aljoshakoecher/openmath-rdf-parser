@@ -1,0 +1,32 @@
+name: Run Test Coverage
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+
+jobs:
+  test-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'  # Specify the Node.js version you need
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run test coverage
+      run: npm run test:coverage
+
+    - name: Upload coverage report
+      if: ${{ always() && github.event_name == 'pull_request_target' && github.event.action == 'closed' }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: coverage/  # Specify the path to your coverage report
