@@ -1,3 +1,4 @@
+/* eslint-disable max-len */ 
 import { FormulaResult } from "../src/FormulaResult";
 import { OmRdfParser } from "../src/OmRdfParser";
 
