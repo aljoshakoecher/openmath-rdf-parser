@@ -1,5 +1,5 @@
 import { getOpenMathBindings } from "../src/fromOpenMath";
-import { capabilityRdfData } from "./capability.test";
+import { capabilityRdfData } from "./capability-tests/capability.test";
 
 describe('Testing query functionalities', () => {
 	test('Should return the correct amount of results', async () => {

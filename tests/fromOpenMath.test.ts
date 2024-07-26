@@ -19,7 +19,7 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#myApplication_equals");
 		const expectedResultEntry = new FormulaResult(
 			{
-				formula:"x=y",
+				formula:"x = y",
 				context: null
 			},
 			"http://example.org/ontology#myApplication_equals",
@@ -52,7 +52,7 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#myApplication_equalsComplex");
 		const expectedResultEntry = new FormulaResult(
 			{
-				formula:"x=y+z",
+				formula:"x = y + z",
 				context: null
 			},
 			"http://example.org/ontology#myApplication_equalsComplex",
@@ -84,7 +84,7 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#myApplication_sin");
 		const expectedResultEntry = new FormulaResult(
 			{
-				formula:"sin(x+y)",
+				formula:"sin(x + y)",
 				context: null
 			},
 			"http://example.org/ontology#myApplication_sin",
@@ -123,7 +123,7 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#myApplication_sinpow");
 		const expectedResultEntry = new FormulaResult(
 			{
-				formula:"sin(pow(x+y))",
+				formula:"sin(pow(x + y))",
 				context: null
 			},
 			"http://example.org/ontology#myApplication_sinpow",
@@ -154,7 +154,7 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#123_eq");
 		const expectedResultEntry = new FormulaResult(
 			{
-				formula:"x=y+5",
+				formula:"x = y + 5",
 				context: null
 			},
 			"http://example.org/ontology#123_eq",
@@ -162,4 +162,131 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		expect(result).toStrictEqual(expectedResultEntry);
 	});
 
+
+	test('Should convert a more complex equation x + 2 = y - 1', async () => {
+		const ttlInput = `
+		@prefix m: <http://openmath.org/vocab/math#>.
+		@prefix ex: <http://example.org/ontology#>.
+		ex:Equation a m:Application ;
+										m:arguments (
+											[ 	
+												a m:Application;
+												m:operator <http://www.openmath.org/cd/arith1#plus>;
+												m:arguments (
+													[a m:Variable; m:name "x"]
+													[a m:Literal; m:value 2]
+												)
+											]
+											[ 	
+												a m:Application;
+												m:operator <http://www.openmath.org/cd/arith1#minus>;
+												m:arguments (
+													[a m:Variable; m:name "y"]
+													[a m:Literal; m:value 1]
+												)
+											]
+										);
+										m:operator <http://www.openmath.org/cd/relation1#eq> .
+		`;
+
+		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#Equation");
+		const expectedResultEntry = new FormulaResult(
+			{
+				formula: "x + 2 = y - 1",
+				context: null
+			},
+			"http://example.org/ontology#Equation",
+		);
+		expect(result).toStrictEqual(expectedResultEntry);
+	});
+
+
+	test('Should convert a more complex expression with boolean relations', async () => {
+		const ttlInput = `
+		@prefix m: <http://openmath.org/vocab/math#>.
+		@prefix ex: <http://example.org/ontology#>.
+		ex:InnerDiameterStackConstraint a m:Application ;
+										m:arguments (
+											[ 	
+												a m:Application;
+												m:operator <http://www.openmath.org/cd/logic1#and>;
+												m:arguments (
+													[
+														a m:Application;
+														m:operator <http://www.openmath.org/cd/relation1#eq>;
+														m:arguments (
+															[a m:Variable; m:name "ex:ProductStack1CurrentInnerDiameter_ID"]
+															[a m:Variable; m:name "ex:RequiredInnerDiameter_ID3"]
+														)
+													]
+													[
+														a m:Application;
+														m:operator <http://www.openmath.org/cd/relation1#eq>;
+														m:arguments (
+															[a m:Variable; m:name "ex:ProductStack1CurrentColor_ID"]
+															[a m:Variable; m:name "ex:RequiredColor_ID"]
+														)
+													]
+												)
+											]
+											[ 	
+												a m:Application;
+												m:operator <http://www.openmath.org/cd/logic1#and>;
+												m:arguments (
+													[
+														a m:Application;
+														m:operator <http://www.openmath.org/cd/relation1#eq>;
+														m:arguments (
+															[a m:Variable; m:name "ex:ProductStack2CurrentInnerDiameter_ID"]
+															[a m:Variable; m:name "ex:RequiredInnerDiameter_ID3"]
+														)
+													]
+													[
+														a m:Application;
+														m:operator <http://www.openmath.org/cd/relation1#eq>;
+														m:arguments (
+															[a m:Variable; m:name "ex:ProductStack2CurrentColor_ID"]
+															[a m:Variable; m:name "ex:RequiredColor_ID"]
+														)
+													]
+												)
+											]
+											[ 	
+												a m:Application;
+												m:operator <http://www.openmath.org/cd/logic1#and>;
+												m:arguments (
+													[
+														a m:Application;
+														m:operator <http://www.openmath.org/cd/relation1#eq>;
+														m:arguments (
+															[a m:Variable; m:name "ex:ProductStack3CurrentInnerDiameter_ID"]
+															[a m:Variable; m:name "ex:RequiredInnerDiameter_ID3"]
+														)
+													]
+													[
+														a m:Application;
+														m:operator <http://www.openmath.org/cd/relation1#eq>;
+														m:arguments (
+															[a m:Variable; m:name "ex:ProductStack3CurrentColor_ID"]
+															[a m:Variable; m:name "ex:RequiredColor_ID"]
+														)
+													]
+												)
+											]
+										);
+										m:operator <http://www.openmath.org/cd/logic1#or> .
+		`;
+
+		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#InnerDiameterStackConstraint");
+		const expectedResultEntry = new FormulaResult(
+			{
+				formula:"ex:ProductStack1CurrentInnerDiameter_ID = ex:RequiredInnerDiameter_ID3 && ex:ProductStack1CurrentColor_ID = ex:RequiredColor_ID || ex:ProductStack2CurrentInnerDiameter_ID = ex:RequiredInnerDiameter_ID3 && ex:ProductStack2CurrentColor_ID = ex:RequiredColor_ID || ex:ProductStack3CurrentInnerDiameter_ID = ex:RequiredInnerDiameter_ID3 && ex:ProductStack3CurrentColor_ID = ex:RequiredColor_ID",
+				context: null
+			},
+			"http://example.org/ontology#InnerDiameterStackConstraint",
+		);
+		expect(result).toStrictEqual(expectedResultEntry);
+	});
+
+	
 });

@@ -1,6 +1,8 @@
 /* eslint-disable max-len */ 
-import { FormulaResult } from "../src/FormulaResult";
-import { OmRdfParser } from "../src/OmRdfParser";
+import { FormulaResult } from "../../src/FormulaResult";
+import { OmRdfParser } from "../../src/OmRdfParser";
+import { supplyCapabilityData } from "./cylinder-supply.data";
+import { drillingData } from "./drilling-capability.data";
 
 export const capabilityRdfData = `
 @prefix : <http://www.hsu-hh.de/aut/ontologies/llm-capability-generation#> .
@@ -162,18 +164,56 @@ describe('Testing conversion of capability constraints', () => {
 		const result = await p.allFromOpenMath(capabilityRdfData);
 		const firstResultEntry = new FormulaResult({
 			context: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport", 
-			formula: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_In_Destination_ID=http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_Out_Product_Pos_ID", 
+			formula: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_In_Destination_ID = http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_Out_Product_Pos_ID", 
 		},
 		"http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_Constraint_Pos_Out"
 		);
 		const secondResultEntry = new FormulaResult(
 			{
 				context: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport", 
-				formula: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#AGV_Pos_ID=http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_In_Product_Pos_ID", 
+				formula: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#AGV_Pos_ID = http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_In_Product_Pos_ID", 
 			},
 			"http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_Constraint_Pos_Req"
 		);
 		const expectedResult = [firstResultEntry, secondResultEntry];
 		expect(result).toStrictEqual(expectedResult);
+	});
+
+	test('Should convert drilling constraints', async () => {
+		const result = await p.allFromOpenMath(drillingData);
+		// const firstResultEntry = new FormulaResult({
+		// 	context: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport", 
+		// 	formula: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_In_Destination_ID=http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_Out_Product_Pos_ID", 
+		// },
+		// "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_Constraint_Pos_Out"
+		// );
+		// const secondResultEntry = new FormulaResult(
+		// 	{
+		// 		context: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport", 
+		// 		formula: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#AGV_Pos_ID=http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_In_Product_Pos_ID", 
+		// 	},
+		// 	"http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_Constraint_Pos_Req"
+		// );
+		// const expectedResult = [firstResultEntry, secondResultEntry];
+		expect(result.length).toBe(7);
+	});
+
+	test('Should convert constraints of cylinder-supply capability', async () => {
+		const result = await p.allFromOpenMath(supplyCapabilityData);
+		// const firstResultEntry = new FormulaResult({
+		// 	context: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport", 
+		// 	formula: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_In_Destination_ID=http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_Out_Product_Pos_ID", 
+		// },
+		// "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_Constraint_Pos_Out"
+		// );
+		// const secondResultEntry = new FormulaResult(
+		// 	{
+		// 		context: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport", 
+		// 		formula: "http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#AGV_Pos_ID=http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_In_Product_Pos_ID", 
+		// 	},
+		// 	"http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_Constraint_Pos_Req"
+		// );
+		// const expectedResult = [firstResultEntry, secondResultEntry];
+		expect(result.length).toBe(40);
 	});
 });

@@ -19,7 +19,7 @@ describe('Testing conversion of all applications from OpenMath to plain text', (
 		const result = await oMParser.allFromOpenMath(ttlInput);
 		const expectedResultEntry = new FormulaResult(
 			{
-				formula:"x=y",
+				formula:"x = y",
 				context: null
 			},
 			"http://example.org/ontology#myApplication_equals",
