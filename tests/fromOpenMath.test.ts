@@ -280,6 +280,7 @@ describe('Testing conversion from OpenMath to plain text', () => {
 		const result = await p.fromOpenMath(ttlInput, "http://example.org/ontology#InnerDiameterStackConstraint");
 		const expectedResultEntry = new FormulaResult(
 			{
+				/* eslint-disable max-len */ 
 				formula:"ex:ProductStack1CurrentInnerDiameter_ID = ex:RequiredInnerDiameter_ID3 && ex:ProductStack1CurrentColor_ID = ex:RequiredColor_ID || ex:ProductStack2CurrentInnerDiameter_ID = ex:RequiredInnerDiameter_ID3 && ex:ProductStack2CurrentColor_ID = ex:RequiredColor_ID || ex:ProductStack3CurrentInnerDiameter_ID = ex:RequiredInnerDiameter_ID3 && ex:ProductStack3CurrentColor_ID = ex:RequiredColor_ID",
 				context: null
 			},
