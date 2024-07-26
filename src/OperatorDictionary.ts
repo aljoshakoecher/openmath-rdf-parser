@@ -7,7 +7,10 @@ export class OperatorDictionary {
 		">": "http://www.openmath.org/cd/relation1#gt", 
 		"!=": "http://www.openmath.org/cd/relation1#neq",
 		"<=": "http://www.openmath.org/cd/relation1#leq",
-		">=": "http://www.openmath.org/cd/relation1#geq", 
+		">=": "http://www.openmath.org/cd/relation1#geq",
+		// Logic operators
+		"&&": "http://www.openmath.org/cd/logic1#and",
+		"||": "http://www.openmath.org/cd/logic1#or",
 		// Arithmetic operators
 		"+": "http://www.openmath.org/cd/arith1#plus",
 		"-": "http://www.openmath.org/cd/arith1#minus",
@@ -46,6 +49,15 @@ export class OperatorDictionary {
 		},
 		"http://www.openmath.org/cd/relation1#geq": {
 			symbol: ">=",
+			arity: 2
+		},
+		// Logic operators
+		"http://www.openmath.org/cd/logic1#and": {
+			symbol: "&&",
+			arity: 2
+		},
+		"http://www.openmath.org/cd/logic1#or": {
+			symbol: "||",
 			arity: 2
 		},
 		// Arithmetic operators
