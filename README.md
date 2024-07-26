@@ -1,4 +1,4 @@
-![Test Status](https://github.com/aljoshakoecher/openmath-rdf-parser/actions/workflows/main.yml/badge.svg)
+![Test Status](https://github.com/aljoshakoecher/openmath-rdf-parser/actions/workflows/test-coverage.yml/badge.svg)
 
 # OpenMath RDF Parser
 A utility tool to convert between string representation and OpenMath RDF representation of mathematical expressions.
