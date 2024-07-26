@@ -9,7 +9,6 @@ import { Application } from "./Application";
 
 export async function allFromOpenMath(rdfString: string): Promise<Array<FormulaResult>> {
 	const bindings = await getOpenMathBindings(rdfString);
-
 	const results = new Array<FormulaResult>();
 
 	// Get all root applications
@@ -150,11 +149,15 @@ function convertBindingsToApplications(bindings: Bindings[]) {
 function getRootApplications(bindings: Bindings[], rootApplicationIri = ""): Array<Application> {
 	// Due to the query structure, finding the parent element is a bit tricky. To understand this function, it's best to execute the query separately and look at the results 
 	// In addition, we check that these candidates are in fact root applications. Check that the value for ?application is no argument (?arg) to a "higher" parent application
-	const rootBindings = bindings.filter(binding => {
-		const hasNoHigherParent = !bindings.some(b => b.get("arg") == binding.get("application"));
-		return hasNoHigherParent;
-	});
+	const argSet = new Set<string>();
 
+	// Add all application values to a set to remove duplicates
+	bindings.forEach(binding => {
+		argSet.add(binding.get('arg')?.value as string);
+	});
+	// Filter entries, whose arg is not contained in the applications -> These are all entries that have no reference from child entries
+	const rootBindings = bindings.filter(binding => !argSet.has(binding.get('application')?.value as string));
+	
 	let rootApplications = convertBindingsToApplications(rootBindings);
 
 	// Additionaly, if a rootApplicationIri is passed, filter only for the corresponding rootApplications bindings that belong to this IRI
