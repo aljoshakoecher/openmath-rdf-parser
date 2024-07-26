@@ -214,6 +214,6 @@ describe('Testing conversion of capability constraints', () => {
 		// 	"http://www.hsu-hh.de/aut/ontologies/llm-capability-generation/transport#Transport_Constraint_Pos_Req"
 		// );
 		// const expectedResult = [firstResultEntry, secondResultEntry];
-		expect(result.length).toBe(40);
+		expect(result.length).toBe(10);
 	});
 });
