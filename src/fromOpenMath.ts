@@ -1,9 +1,10 @@
 import { QueryEngine } from "@comunica/query-sparql";
 import { MathJsSymbolInformation, OperatorDictionary } from "./OperatorDictionary";
-import { Bindings } from "@rdfjs/types";
+import { Bindings, Term } from "@rdfjs/types";
 
 import { Store, Parser as N3Parser} from "n3";
 import { FormulaOfContext, FormulaResult } from "./FormulaResult";
+import { Application } from "./Application";
 
 
 export async function allFromOpenMath(rdfString: string): Promise<Array<FormulaResult>> {
@@ -12,10 +13,10 @@ export async function allFromOpenMath(rdfString: string): Promise<Array<FormulaR
 	const results = new Array<FormulaResult>();
 
 	// Get all root applications
-	const rootApplications = getAllRootApplications(bindings);
+	const rootApplications = getRootApplications(bindings);
 	rootApplications.forEach(rootApplication => {
 		const formula = getArgumentsOfApplication(rootApplication, bindings);
-		const result = new FormulaResult(formula, rootApplication.get('application')?.value as string);
+		const result = new FormulaResult(formula, rootApplication.application.value as string);
 		results.push(result);
 	});
 	return results;
@@ -67,11 +68,15 @@ export async function fromOpenMath(rdfString: string, rootApplicationIri: string
 	const bindings = await getOpenMathBindings(rdfString);
 	
 	// Get root application to start the whole recursive parsing procedure
-	const rootApplication = getRootApplication(bindings, rootApplicationIri);
-	const formula = getArgumentsOfApplication(rootApplication, bindings);
-	const result = new FormulaResult(formula, rootApplicationIri);
+	const rootApplications = getRootApplications(bindings, rootApplicationIri);
+	const results = new Array<FormulaResult>();
+	rootApplications.forEach(rootApplication => {
+		const formula = getArgumentsOfApplication(rootApplication, bindings);
+		const result = new FormulaResult(formula, rootApplicationIri);
+		results.push(result);
+	});
 	
-	return result;
+	return results[0];
 }
 
 
@@ -101,39 +106,38 @@ function parseAsPromise(rdfString: string): Promise<Store> {
 }
 
 
-/**
- * Finds all root applications in a given Array of bindings
- * @param bindings All results of the parsing query
- * @returns An array of root application IRIs within the list of all Bindings
- */
-function getAllRootApplications(bindings: Bindings[]): Array<Bindings> {
-	// Due to the query structure, finding the parent element is a bit tricky. To understand this function, it's best to execute the query separately and look at the results 
-	// First, we filter for the given rootApplicationIri to look only for entries of the OpenMath expression we are interested in (this filters out other possible roots)
-	// In addition, we check that these candidates are in fact root applications. Check that the value for ?application is no argument (?arg) to a "higher" parent application
-	const candidates = bindings.filter(binding => {
-		return !bindings.some(b => b.get("arg") == binding.get("application"));		// finds all root applications
+// Function to group array with a key function
+function groupBy<T, K extends string | number>(array: T[], keyFn: (item: T) => K): Record<K, T[]> {
+	return array.reduce((result, currentItem) => {
+		const groupKey = keyFn(currentItem);
+		if (!result[groupKey]) {
+			result[groupKey] = [];
+		}
+		result[groupKey].push(currentItem);
+		return result;
+	}, {} as Record<K, T[]>);
+}
+
+function convertBindingsToApplications(bindings: Bindings[]) {
+	if (bindings.length == 0 ) return new Array<Application>();
+	
+	// There can be multiple entries for each rootApplication (one for each sub application), we need to group rootApplications by application variable
+	const groupedBindings = groupBy(bindings, (binding) => binding.get('application')?.value as string);
+
+	// In each group, everything is the same, only args are different. Create a l application object to make it easier to handle
+	const applications = Object.keys(groupedBindings).map(groupKey => {
+		const group = groupedBindings[groupKey] as Bindings[];
+		const firstEntry = group[0]; // Der erste Eintrag in der Gruppe
+		const args = group.map(entry => entry.get('arg')) as Term[];
+
+		const application = new Application(firstEntry.get('context') as Term, firstEntry.get('application') as Term, 
+			firstEntry.get('position') as Term, firstEntry.get('operator') as Term, firstEntry.get('argName') as Term, firstEntry.get('argValue') as Term
+		);
+		application.args = args;
+		return application;
 	});
 
-	// We can then still have multiple rows within the bindings if the root application is a binary relation (e.g. for "y=x+z" and x=y).
-	// If there are no sub applications, any line can be returend. If there is a sub application, this one must be returned
-	const parentsWithSubApplication = candidates.filter(rootCandidate => (rootCandidate.get("argType")!.value == "http://openmath.org/vocab/math#Application"));
-
-	let applications: Bindings[];
-	if (parentsWithSubApplication.length != 0) {
-		// If there is a parent with a sub application, return this one
-		applications = parentsWithSubApplication;
-	} else {
-		// If not, simply return the candidates
-		applications =  candidates;
-	}
-	
-	// make sure to avoid duplicates
-	const uniqueApplications = [
-		...new Map(applications.map(obj => [obj.get('application'), obj])).values()
-	];
-	// // if (!rootApplication) throw new Error(`Error while finding root application with IRI ${rootApplicationIri}`);
-
-	return uniqueApplications;
+	return applications;
 }
 
 
@@ -143,44 +147,43 @@ function getAllRootApplications(bindings: Bindings[]): Array<Bindings> {
  * @param rootApplicationIri IRI of the root application to search for
  * @returns The root application entry within the list of all Bindings
  */
-function getRootApplication(bindings: Bindings[], rootApplicationIri: string): Bindings {
+function getRootApplications(bindings: Bindings[], rootApplicationIri = ""): Array<Application> {
 	// Due to the query structure, finding the parent element is a bit tricky. To understand this function, it's best to execute the query separately and look at the results 
-	// First, we filter for the given rootApplicationIri to look only for entries of the OpenMath expression we are interested in (this filters out other possible roots)
 	// In addition, we check that these candidates are in fact root applications. Check that the value for ?application is no argument (?arg) to a "higher" parent application
-	const candidates = bindings.filter(binding => {
-		const matchesRootApplicationIri = binding.get("application")!.value === rootApplicationIri;
+	const rootBindings = bindings.filter(binding => {
 		const hasNoHigherParent = !bindings.some(b => b.get("arg") == binding.get("application"));
-		return (matchesRootApplicationIri && hasNoHigherParent);
+		return hasNoHigherParent;
 	});
 
-	// We can then still have multiple rows within the bindings if the root application is a binary relation (e.g. for "y=x+z" and x=y).
-	// If there are no sub applications, any line can be returend. If there is a sub application, this one must be returned
-	const parentWithSubApplication = candidates.find(rootCandidate => (rootCandidate.get("argType")!.value == "http://openmath.org/vocab/math#Application"));
+	let rootApplications = convertBindingsToApplications(rootBindings);
 
-	let rootApplication;
-	if (parentWithSubApplication) {
-		// If there is a parent with a sub application, return this one
-		rootApplication = parentWithSubApplication;
-	} else {
-		// If not, simply return the first one. It doesn't matter as in later stages, all information will be retrieved
-		rootApplication =  candidates[0];
+	// Additionaly, if a rootApplicationIri is passed, filter only for the corresponding rootApplications bindings that belong to this IRI
+	// This effectively filters out all other OpenMath equations that we are not interested in
+	if (rootApplicationIri) {
+		rootApplications = rootApplications.filter(application => {
+			const matchesRootApplicationIri = application.application.value === rootApplicationIri;
+			return matchesRootApplicationIri;
+		});
 	}
-	
-	// if (!rootApplication) throw new Error(`Error while finding root application with IRI ${rootApplicationIri}`);
 
-	return rootApplication;
+	return rootApplications;
 }
 
-function getArgumentsOfApplication(parentApplication: Bindings, bindings: Bindings[]): FormulaOfContext {
+function getArgumentsOfApplication(parentApplication: Application, bindings: Bindings[]): FormulaOfContext {
 	// Check if there are more entries with arguments under the current element's application. This is the case for non-nested terms like x+y+z...
-	const argumentEntries = bindings.filter(binding => binding.get("application")!.equals(parentApplication.get("application")));
+	const argumentEntries = bindings.filter(binding => binding.get("application")!.equals(parentApplication.application));
 	
 	// Check if the entry has children. If it has, we need to recursively go deeper
-	const childApplications = bindings.filter(binding => binding.get("application")!.equals(parentApplication.get("arg")));
+	const childBindings: Bindings[] = new Array<Bindings>();
+	parentApplication.args.forEach(parentArg => {
+		const childBinding = bindings.filter(binding => binding.get("application")!.equals(parentArg));
+		childBindings.push(...childBinding);
+	});
+	const childApplications = convertBindingsToApplications(childBindings);
 	
 	let formulaString = "";
 	if (childApplications.length > 0) {
-		const entry = childApplications[0];
+		// const entry = childApplications[0];
 		const openMathOperator = argumentEntries[0].get("operator")!.value;
 		const operator = OperatorDictionary.getMathJsSymbol(openMathOperator);
 		const argumentNames = new Array<string>();
@@ -192,8 +195,12 @@ function getArgumentsOfApplication(parentApplication: Bindings, bindings: Bindin
 				argumentNames.push(entry.get("argValue")!.value);
 			}
 		});
-		// const argumentNames = argumentEntries.flatMap(entry => (entry.get("argName") !== undefined) ? entry.get("argName").value : []);
-		formulaString = createExpression(operator, [...argumentNames, getArgumentsOfApplication(entry, bindings).formula]);
+		const argumentsOfChildApplications = new Array<string>();
+		childApplications.forEach(element => {
+			const argumentsFormula = getArgumentsOfApplication(element, bindings).formula;
+			argumentsOfChildApplications.push(argumentsFormula);
+		}); 
+		formulaString = createExpression(operator, [...argumentNames, ...argumentsOfChildApplications]);
 	} else{
 		const allSameOperator = argumentEntries.every(entry => entry.get("operator")!.equals(argumentEntries[0].get("operator")));
 		if (!allSameOperator) {
@@ -213,8 +220,9 @@ function getArgumentsOfApplication(parentApplication: Bindings, bindings: Bindin
 
 		formulaString = createExpression(operator, argumentNames);
 	}
+
 	// get the context (should be the same for every entry)
-	const context = parentApplication.get('context')?.value as string ?? null;
+	const context = parentApplication.context?.value as string ?? null;
 	const formula = new FormulaOfContext(context, formulaString);
 	
 	return formula as FormulaOfContext;
@@ -238,7 +246,7 @@ function createExpression(operator:MathJsSymbolInformation, argumentExpression: 
 	}
 	if (arity == 2) {
 		// Binary operators are constructed by concatenating operator and arguments, e.g. x + y + z...
-		expression = (argumentExpression as string[]).join(operatorSymbol);
+		expression = (argumentExpression as string[]).join(` ${operatorSymbol} `);
 	}
 	return expression;
 }
