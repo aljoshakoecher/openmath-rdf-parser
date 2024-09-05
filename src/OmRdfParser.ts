@@ -1,7 +1,8 @@
+import { QuadsAndPrefixes } from "./QuadsAndPrefixes";
 import { PrefixedFormula } from "./Formula";
 import { FormulaResult } from "./FormulaResult";
 import { allFromOpenMath, fromOpenMath } from "./fromOpenMath";
-import { replaceIris, resolvePrefixes, toOpenMath } from "./toOpenMath";
+import { replaceIris, resolvePrefixes, toOpenMath, toOpenMathQuadsAndPrefixes } from "./toOpenMath";
 
 /**
  * A parser that allows converting between string and RDF representation of mathematical formulas
@@ -28,6 +29,16 @@ export class OmRdfParser {
 	 */
 	fromOpenMath(rdfString: string, rootApplicationIri: string): Promise<FormulaResult> {
 		return fromOpenMath(rdfString, rootApplicationIri);
+	}
+
+	/**
+	 * Converts a mathematical formula in plain string representation to its OpenMath RDF quads and prefixes representation.
+	 * 
+	 * @param {PrefixedFormula | string} formula - In the simplest case, this is a string representation of a formula without any references to ontological entities, e.g., `x + y <= 2`. For such cases, blank nodes are created representing x and y. Alternatively, you can provide a PrefixedFormula object to include prefixes for IRIs.
+	 * @returns {QuadsAndPrefixes} - The OpenMath RDF quads and corresponding prefixes of the input formula.
+	 */
+	toOpenMathQuadsAndPrefixes(formula: PrefixedFormula | string): QuadsAndPrefixes {
+		return toOpenMathQuadsAndPrefixes(formula);
 	}
 
 	/**

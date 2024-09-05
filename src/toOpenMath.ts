@@ -1,15 +1,16 @@
-import { MathNode, parse as mathParse } from "mathjs";
-import { OperatorDictionary } from "./OperatorDictionary";
-import { BlankNode, DataFactory, NamedNode, Quad, Term, Writer} from "n3";
-import { PrefixedFormula } from "./Formula";
-import { IriVariableDictionary } from "./IriVariableMap";
+import { MathNode, parse as mathParse } from 'mathjs';
+import { OperatorDictionary } from './OperatorDictionary';
+import { BlankNode, DataFactory, NamedNode, Quad, Store, Term, Writer } from 'n3';
+import { PrefixedFormula } from './Formula';
+import { IriVariableDictionary } from './IriVariableMap';
+import { QuadsAndPrefixes } from './QuadsAndPrefixes';
 const { literal, blankNode, namedNode } = DataFactory;
 
 // Define base IRI
-const baseIri = "http://example.org/ontology#";		//TODO: Allow passing in base IRI
+const baseIri = 'http://example.org/ontology#'; //TODO: Allow passing in base IRI
 
 // Define some shorthands for needed properties and classes
-const rdfType = namedNode("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+const rdfType = namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 const omApplication = namedNode('http://openmath.org/vocab/math#Application');
 const omArguments = namedNode('http://openmath.org/vocab/math#arguments');
 const omOperator = namedNode('http://openmath.org/vocab/math#operator');
@@ -18,29 +19,23 @@ const omLiteral = namedNode('http://openmath.org/vocab/math#Literal');
 const omVariableName = namedNode('http://openmath.org/vocab/math#name');
 const omLiteralValue = namedNode('http://openmath.org/vocab/math#value');
 
-// globally define writer so that it doesn't have to be passed in all recursive function calls
-let writer: Writer = new Writer({
-	prefixes: { m: 'http://openmath.org/vocab/math#' }
-});
-
-
 /**
- * Convert a mathematical expression from a string to an OpenMath RDF object
+ * Convert a mathematical expression from a string to an OpenMath RDF quads and prefixes
  * @param formula A mathematical formula represented in string syntax
- * @returns 
+ * @returns
  */
-export async function toOpenMath(prefixedFormula: PrefixedFormula | string): Promise<string> {
+export function toOpenMathQuadsAndPrefixes(prefixedFormula: PrefixedFormula | string): QuadsAndPrefixes {
 	IriVariableDictionary.reset();
 
-	// Add open-math prefix and user-defined prefixes to the writer
-	writer = new Writer({
-		prefixes: { m: 'http://openmath.org/vocab/math#' }
-	});
-
+	const prefixes: Record<string, string> = {
+		m: 'http://openmath.org/vocab/math#',
+	};
 	let formula: string;
+
 	if (Object.hasOwn(prefixedFormula as PrefixedFormula, 'prefixes')) {
 		for (const [key, value] of (prefixedFormula as PrefixedFormula).prefixes.entries()) {
-			writer.addPrefix(key, value);
+			console.log(key, value);
+			prefixes[key] = value;
 		}
 		formula = resolvePrefixes(prefixedFormula as PrefixedFormula);
 	} else {
@@ -52,16 +47,41 @@ export async function toOpenMath(prefixedFormula: PrefixedFormula | string): Pro
 	// Parse the textual formula into a math.js representation
 	const node = mathParse(formula);
 
-	// Map the parsed math.js node structure
-	mapToRdf(node);
+	// Create a new RDF store to hold the quads
+	const quadsStore = new Store();
 
-	// serialize to ttl
-	const result = await serializeWriter(writer);
-	return result;
+	// Map the parsed math.js node structure
+	mapToRdf(node, quadsStore);
+
+	const quads: Quad[] = quadsStore.getQuads(
+    null as Term | null, // Subject: OTerm (object term)
+    null as Term | null, // Predicate: OTerm
+    null as Term | null, // Object: OTerm | OTerm[]
+    null as Term | null, // Graph: OTerm
+	);
+
+	return { quads, prefixes };
 }
 
-function mapToRdf(node: MathNode): NamedNode | BlankNode {
+/**
+ * Convert a mathematical expression from a string to an OpenMath RDF object
+ * @param formula A mathematical formula represented in string syntax
+ * @returns 
+ */
+export async function toOpenMath(prefixedFormula: PrefixedFormula | string): Promise<string> {
+	const { quads, prefixes } = toOpenMathQuadsAndPrefixes(prefixedFormula);
 
+	// Add open-math prefix and user-defined prefixes to the writer
+	const writer = new Writer({
+		prefixes,
+	});
+	writer.addQuads(quads);
+
+	// serialize to ttl
+	return serializeWriter(writer);
+}
+
+function mapToRdf(node: MathNode, quadsStore: Store): NamedNode | BlankNode {
 	switch (node.type) {
 	case 'ConstantNode': {
 		const castNode = node as math.ConstantNode;
@@ -69,7 +89,7 @@ function mapToRdf(node: MathNode): NamedNode | BlankNode {
 		const rdfSymbolNode = blankNode();
 		const typeTriple = new Quad(rdfSymbolNode, rdfType, omLiteral);
 		const valueTriple = new Quad(rdfSymbolNode, omLiteralValue, literal(nodeValue));
-		writer.addQuads([typeTriple, valueTriple]);
+		quadsStore.addQuads([typeTriple, valueTriple]);
 		return rdfSymbolNode;
 	}
 	case 'SymbolNode': {
@@ -84,25 +104,25 @@ function mapToRdf(node: MathNode): NamedNode | BlankNode {
 		}
 		const typeTriple = new Quad(rdfSymbolNode, rdfType, omVariable);
 		const nameTriple = new Quad(rdfSymbolNode, omVariableName, literal(nodeName));
-		writer.addQuads([typeTriple, nameTriple]);
+		quadsStore.addQuads([typeTriple, nameTriple]);
 		return rdfSymbolNode;
 	}
 	case 'AssignmentNode': {
 		const castNode = node as math.AssignmentNode;
-		const rdfOperator = namedNode(OperatorDictionary.getOpenMathSymbol("="));
+		const rdfOperator = namedNode(OperatorDictionary.getOpenMathSymbol('='));
 		const application = namedNode(`${baseIri}${crypto.randomUUID()}_eq`);
-		writer.addQuad(application, rdfType, omApplication);
-		writer.addQuad(application, omOperator, rdfOperator);
+		quadsStore.addQuad(application, rdfType, omApplication);
+		quadsStore.addQuad(application, omOperator, rdfOperator);
 
 		// add arguments for each arg
-		const argumentList = new Array<NamedNode | BlankNode>;
+		const argumentList = new Array<NamedNode | BlankNode>();
 		// map object and value (left and right side of equation) and add it to the list
-		const mappedObject = mapToRdf(castNode.object);
+		const mappedObject = mapToRdf(castNode.object, quadsStore);
 		argumentList.push(mappedObject);
-		const mappedValue = mapToRdf(castNode.value);
+		const mappedValue = mapToRdf(castNode.value, quadsStore);
 		argumentList.push(mappedValue);
-		const argumentRdfList = writer.list(argumentList);
-		writer.addQuad(application, omArguments, argumentRdfList);
+		const argumentRdfList = new Writer().list(argumentList);
+		quadsStore.addQuad(application, omArguments, argumentRdfList);
 		return application;
 	}
 	case 'OperatorNode': {
@@ -110,18 +130,18 @@ function mapToRdf(node: MathNode): NamedNode | BlankNode {
 		const operator = castNode.op;
 		const rdfOperator = namedNode(OperatorDictionary.getOpenMathSymbol(operator));
 		const application = namedNode<string>(`${baseIri}${crypto.randomUUID()}_${castNode.fn}`);
-		writer.addQuad(application, rdfType, omApplication);
-		writer.addQuad(application, omOperator, rdfOperator);
+		quadsStore.addQuad(application, rdfType, omApplication);
+		quadsStore.addQuad(application, omOperator, rdfOperator);
 
 		// add arguments for each arg
-		const argumentList = new Array<NamedNode | BlankNode>;
-		castNode.args.forEach(argument => {
+		const argumentList = new Array<NamedNode | BlankNode>();
+		castNode.args.forEach((argument) => {
 			// map the argument and add it to the list
-			const mappedArgument = mapToRdf(argument);
+			const mappedArgument = mapToRdf(argument, quadsStore);
 			argumentList.push(mappedArgument);
 		});
-		const argumentRdfList = writer.list(argumentList);
-		writer.addQuad(application, omArguments, argumentRdfList);
+		const argumentRdfList = new Writer().list(argumentList);
+		quadsStore.addQuad(application, omArguments, argumentRdfList);
 		return application;
 	}
 	case 'FunctionNode': {
@@ -129,18 +149,18 @@ function mapToRdf(node: MathNode): NamedNode | BlankNode {
 		const operator = castNode.fn.name;
 		const rdfOperator = namedNode(OperatorDictionary.getOpenMathSymbol(operator));
 		const application = namedNode(`${baseIri}${crypto.randomUUID()}_${castNode.fn}`) as NamedNode;
-		writer.addQuad(application, rdfType, omApplication);
-		writer.addQuad(application, omOperator, rdfOperator);
+		quadsStore.addQuad(application, rdfType, omApplication);
+		quadsStore.addQuad(application, omOperator, rdfOperator);
 
 		// add arguments for each arg
 		const argumentList = new Array<NamedNode | BlankNode>();
-		castNode.args.forEach(argument => {
+		castNode.args.forEach((argument) => {
 			// map the argument and add it to the list
-			const mappedArgument = mapToRdf(argument);
+			const mappedArgument = mapToRdf(argument, quadsStore);
 			argumentList.push(mappedArgument);
 		});
-		const argumentRdfList = writer.list(argumentList);
-		writer.addQuad(application, omArguments, argumentRdfList);
+		const argumentRdfList = new Writer().list(argumentList);
+		quadsStore.addQuad(application, omArguments, argumentRdfList);
 		// writer.addQuad(application, omArguments, literal(operator));
 		return application;
 	}
@@ -149,13 +169,11 @@ function mapToRdf(node: MathNode): NamedNode | BlankNode {
 	}
 }
 
-
-
 /**
-* Replaces all prefixes in a formula
-* @param prefixedFormula Formula with prefix definition
-* @returns Prefix-free formula with full IRIs
-*/
+ * Replaces all prefixes in a formula
+ * @param prefixedFormula Formula with prefix definition
+ * @returns Prefix-free formula with full IRIs
+ */
 export function resolvePrefixes(prefixedFormula: PrefixedFormula): string {
 	const formula = prefixedFormula.formula;
 	const prefixes = prefixedFormula.prefixes;
@@ -179,11 +197,11 @@ export function resolvePrefixes(prefixedFormula: PrefixedFormula): string {
 
 /**
  * Replaces all IRIs with variables and keeps track of the mapping to re-translate it
- * @param formula 
- * @returns 
+ * @param formula
+ * @returns
  */
 export function replaceIris(formula: string): string {
-	const regex = /https?:[/]{2}[a-zA-Z.\-_/#0-9]*/g;		// pretty naive regex for IRIs
+	const regex = /https?:[/]{2}[a-zA-Z.\-_/#0-9]*/g; // pretty naive regex for IRIs
 	let match;
 	let formulaWithIrisReplaced = formula;
 	while ((match = regex.exec(formula)) !== null) {
@@ -195,14 +213,12 @@ export function replaceIris(formula: string): string {
 	return formulaWithIrisReplaced;
 }
 
-
-
 /**
  * Wraps the end() function of the N3 writer class so that a Promise and async / await can be used
  * @param writer The writer to serialize data from
  * @returns Promise<string> containing the serialized writer content
  */
-function serializeWriter(writer: Writer): Promise<string> {
+async function serializeWriter(writer: Writer): Promise<string> {
 	return new Promise((resolve, reject) => {
 		writer.end((error, result) => {
 			if (error) {
